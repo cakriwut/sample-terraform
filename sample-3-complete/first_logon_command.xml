@@ -1,0 +1,12 @@
+<FirstLogonCommands>
+    <SynchronousCommand>
+    <CommandLine>cmd /c "copy C:\AzureData\CustomData.bin C:\init.ps1"</CommandLine>
+    <Description>CopyScript</Description>
+    <Order>11</Order>
+  </SynchronousCommand>
+  <SynchronousCommand>
+    <CommandLine>powershell.exe -sta -ExecutionPolicy Unrestricted -Command "$env:AdminUser='$(admin_username)'; $env:AdminPassword='$(admin_username)';C:\init.ps1; Remove-Item C:\Init.ps1 -Force; exit 0;"</CommandLine>
+    <Description>RunScript</Description>
+    <Order>12</Order>
+  </SynchronousCommand>
+</FirstLogonCommands>

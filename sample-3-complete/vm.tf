@@ -46,6 +46,8 @@ resource "azurerm_windows_virtual_machine" "devops-app" {
    admin_username =  var.admin_username
    admin_password = var.admin_password
 
+   custom_data = filebase64("app_init.ps1")
+
    source_image_reference {
        publisher = "MicrosoftWindowsServer"
        offer = "WindowsServer"
@@ -57,4 +59,29 @@ resource "azurerm_windows_virtual_machine" "devops-app" {
        caching = "ReadWrite"
        storage_account_type = "Standard_LRS"
    }
+}
+
+resource "azurerm_virtual_machine_extension" "devops-app-customscript" {
+  count = var.vm_app_total
+  name                 = "CustomScript"
+  virtual_machine_id   = azurerm_windows_virtual_machine.devops-app[count.index].id
+  publisher            = "Microsoft.Compute"
+  type                 = "CustomScriptExtension"
+  type_handler_version = "1.9"
+  
+  protected_settings = jsonencode({
+      "commandToExecute": "powershell.exe -ExecutionPolicy Unrestricted  -Command \"$env:AdminUser='${var.admin_username}'; $env:AdminPassword='${var.admin_password}'; copy-item c:\\AzureData\\CustomData.bin c:\\init.ps1;& c:\\init.ps1; Remove-Item c:\\Init.ps1 -Force; exit 0;\""
+  })
+
+  tags = var.tags
+}
+
+resource "azurerm_virtual_machine_extension" "devops-app-bginfo" {
+  count = var.vm_app_total
+  name                 = "BGInfo"
+  virtual_machine_id = azurerm_windows_virtual_machine.devops-app[count.index].id
+  publisher            = "Microsoft.Compute"
+  type                 = "BGInfo"
+  type_handler_version = "2.1"  
+  depends_on           = [azurerm_virtual_machine_extension.devops-app-customscript]
 }
